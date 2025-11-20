@@ -6,13 +6,12 @@ import { getFirestore, doc, setDoc, onSnapshot, collection, query, serverTimesta
 
 // --- GLOBAL FIREBASE CONFIG & DATA ---
 // Variables are now injected via Vite configuration
-const appId = __FIREBASE_VARS__.APP_ID.replace(/"/g, ''); // Remove quotes from stringified value
+// Note: We use global object injected by vite.config.js
+const appId = __FIREBASE_VARS__.APP_ID.replace(/"/g, ''); 
 const firebaseConfig = JSON.parse(__FIREBASE_VARS__.CONFIG);
 const initialAuthToken = __FIREBASE_VARS__.AUTH_TOKEN;
 
 // --- DATASET (Same as V7) ---
-// ... (DATASET remains the same)
-
 const LANGUAGES = [
   // LATIN FAMILY
   { id: 'es', name: 'Spanish', countryCode: 'es', family: 'latin' },
