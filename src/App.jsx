@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, Clock, RotateCcw, Play, CheckCircle, XCircle, Globe, SkipForward, AlertCircle, User, Award } from 'lucide-react';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
-import { getFirestore, doc, setDoc, onSnapshot, collection, query, serverTimestamp } from 'firebase/firestore';
-
-// --- GLOBAL FIREBASE CONFIG & DATA ---
-// Variables are now injected via Vite configuration
-// Note: We use global object injected by vite.config.js
-const appId = __FIREBASE_VARS__.APP_ID.replace(/"/g, ''); 
-const firebaseConfig = JSON.parse(__FIREBASE_VARS__.CONFIG);
-const initialAuthToken = __FIREBASE_VARS__.AUTH_TOKEN;
+import { Trophy, Clock, RotateCcw, Play, CheckCircle, XCircle, Globe, SkipForward, AlertCircle } from 'lucide-react';
 
 // --- DATASET (Same as V7) ---
 const LANGUAGES = [
@@ -208,126 +198,7 @@ const getOptions = (correctLangId) => {
   return shuffle([...shuffledDistractors, correctLang]);
 };
 
-// --- FIREBASE LOGIC COMPONENT ---
-function Leaderboard({ isAuthReady, finalScore, onStartNewGame, currentUserName, scoreSubmitted }) {
-    const [leaderboard, setLeaderboard] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [db, setDb] = useState(null);
-
-    // 1. Initialize Firebase and Listener
-    useEffect(() => {
-        // Skip initialization if no firebase config is present
-        if (!isAuthReady || !firebaseConfig || !Object.keys(firebaseConfig).length || firebaseConfig.apiKey === "PUBLIC_PLACEHOLDER_KEY") {
-             console.warn("Leaderboard is using placeholder config.");
-             setIsLoading(false);
-             return;
-        }
-
-        try {
-            const app = initializeApp(firebaseConfig);
-            const firestoreDb = getFirestore(app);
-            setDb(firestoreDb);
-            
-            // Define the public collection path for scores
-            const q = collection(firestoreDb, `artifacts/${appId}/public/data/leaderboard`);
-            
-            const unsubscribe = onSnapshot(q, (snapshot) => {
-                const scores = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    scores.push({ id: doc.id, ...data });
-                });
-                // Sort scores by score (descending) and timestamp (ascending) in memory
-                scores.sort((a, b) => {
-                    if (b.score !== a.score) {
-                        return b.score - a.score;
-                    }
-                    // Secondary sort by time submitted (earlier time is better)
-                    const aTime = a.timestamp?.toMillis() || 0;
-                    const bTime = b.timestamp?.toMillis() || 0;
-                    return aTime - bTime;
-                });
-                setLeaderboard(scores);
-                setIsLoading(false);
-            }, (error) => {
-                // IMPORTANT: Log error to console for debugging security rules
-                console.error("Firestore Leaderboard Fetch Error (Likely Security Rules):", error);
-                setIsLoading(false);
-            });
-            
-            return () => unsubscribe();
-        } catch (error) {
-            console.error("Firebase initialization failed:", error);
-            setIsLoading(false);
-        }
-    }, [isAuthReady]);
-
-    // Medal component
-    const Medal = ({ rank }) => {
-        if (rank === 1) return <span className="text-3xl">🥇</span>;
-        if (rank === 2) return <span className="text-3xl">🥈</span>;
-        if (rank === 3) return <span className="text-3xl">🥉</span>;
-        return <span className="text-slate-500 font-mono text-lg">{rank}</span>;
-    };
-
-    return (
-        <div className="mt-8">
-            <h3 className="text-2xl font-bold text-yellow-400 mb-4 flex items-center justify-center gap-2">
-                <Award size={24} /> Top 10 Polyglots
-            </h3>
-
-            {finalScore !== null && finalScore > 0 && scoreSubmitted && currentUserName && (
-                 <div className="text-center text-green-400 text-sm mb-4">
-                     Score of **{finalScore}** submitted to the leaderboards!
-                 </div>
-            )}
-
-            <div className="bg-slate-950 rounded-2xl p-4 border border-slate-800 shadow-inner">
-                {isLoading ? (
-                    <div className="text-center text-slate-500 py-4">Loading Leaderboard...</div>
-                ) : leaderboard.length === 0 ? (
-                    <div className="text-center text-slate-500 py-4">No scores yet! Be the first!</div>
-                ) : (
-                    <ul className="space-y-2">
-                        {leaderboard.slice(0, 10).map((entry, index) => (
-                            <li 
-                                key={entry.id} 
-                                className={`flex justify-between items-center p-3 rounded-xl transition-all ${
-                                    index === 0 ? 'bg-yellow-500/10 border border-yellow-500/30' :
-                                    index < 3 ? 'bg-slate-800/50' :
-                                    'bg-slate-900/50'
-                                }`}
-                            >
-                                <div className="flex items-center gap-4">
-                                    <Medal rank={index + 1} />
-                                    <span className={`font-semibold ${index < 3 ? 'text-white' : 'text-slate-300'}`}>
-                                        {entry.username || 'Anonymous'}
-                                    </span>
-                                </div>
-                                <div className="font-mono font-bold text-lg text-yellow-300">
-                                    {entry.score}
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </div>
-            
-            <button 
-                onClick={onStartNewGame}
-                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl text-lg transition-colors flex items-center justify-center gap-2 border border-blue-700 mt-6"
-            >
-                <Play size={20} />
-                Start New Game
-            </button>
-        </div>
-    );
-}
-
-
-// --- MAIN APP COMPONENT ---
-
-export default function App() {
+export default function LanguageGame() {
   const [gameState, setGameState] = useState('start'); 
   const [roundQuestions, setRoundQuestions] = useState([]);
   const [currentRound, setCurrentRound] = useState(0);
@@ -339,75 +210,6 @@ export default function App() {
   const [streak, setStreak] = useState(0);
   const [feedback, setFeedback] = useState(null); 
   const [penaltyAmount, setPenaltyAmount] = useState(0);
-
-  // New State for Arcade Mode
-  const [username, setUsername] = useState('');
-  const [isAuthReady, setIsAuthReady] = useState(false);
-  const [db, setDb] = useState(null);
-  const [auth, setAuth] = useState(null);
-  const [scoreSubmitted, setScoreSubmitted] = useState(false);
-
-
-  // 1. Firebase Initialization and Auth
-  useEffect(() => {
-    // Check using the new injected variables
-    if (!firebaseConfig || !Object.keys(firebaseConfig).length || firebaseConfig.apiKey === "PUBLIC_PLACEHOLDER_KEY") {
-        console.warn("Firebase config is using PLACEHOLDER. Leaderboard disabled.");
-        setIsAuthReady(true);
-        return;
-    }
-
-    try {
-        const app = initializeApp(firebaseConfig);
-        const firestoreDb = getFirestore(app);
-        const firebaseAuth = getAuth(app);
-        setDb(firestoreDb);
-        setAuth(firebaseAuth);
-
-        const authenticate = async () => {
-            if (initialAuthToken && initialAuthToken !== "null" && initialAuthToken !== "undefined") {
-                await signInWithCustomToken(firebaseAuth, initialAuthToken);
-            } else {
-                await signInAnonymously(firebaseAuth);
-            }
-            setIsAuthReady(true);
-        };
-        authenticate();
-
-    } catch (error) {
-        console.error("Firebase Auth or Init Error:", error);
-        setIsAuthReady(true); // Proceed even if auth fails
-    }
-  }, []);
-
-  // 2. Score Submission Logic
-  const submitScore = async (finalScore, userName) => {
-    if (!db || finalScore <= 0 || !auth?.currentUser) {
-        setScoreSubmitted(true);
-        return;
-    }
-
-    const userId = auth.currentUser.uid;
-    // Public collection path for the leaderboard
-    const scoreDocRef = doc(db, `artifacts/${appId}/public/data/leaderboard`, userId);
-    
-    try {
-        await setDoc(scoreDocRef, {
-            score: finalScore,
-            username: userName,
-            timestamp: serverTimestamp(),
-            userId: userId
-        }, { merge: true }); // Use merge:true to update if user already exists
-        
-        console.log("Score submission attempt successful.");
-        setScoreSubmitted(true);
-    } catch (error) {
-        // IMPORTANT: Log error to console for debugging security rules
-        console.error("Firestore Score Submission Failed (Likely Security Rules):", error);
-        setScoreSubmitted(true);
-    }
-  };
-
 
   // --- Game Logic ---
 
@@ -425,12 +227,6 @@ export default function App() {
   };
 
   const startGame = () => {
-    // Check if username is valid before starting
-    if (username.length < 3) {
-        setGameState('start'); 
-        return;
-    }
-
     const easyQ = shuffle(QUESTION_POOL.filter(q => q.difficulty === 'easy')).slice(0, 4);
     const mediumQ = shuffle(QUESTION_POOL.filter(q => q.difficulty === 'medium')).slice(0, 8);
     const hardQ = shuffle(QUESTION_POOL.filter(q => q.difficulty === 'hard')).slice(0, 8);
@@ -441,7 +237,6 @@ export default function App() {
     setCurrentRound(0);
     setScore(0);
     setStreak(0);
-    setScoreSubmitted(false);
     setGameState('playing');
     loadRound(0, finalSet);
   };
@@ -528,10 +323,6 @@ export default function App() {
       setCurrentRound(prev => prev + 1);
       loadRound(currentRound + 1, roundQuestions);
     } else {
-      // Game over, submit score if greater than 0
-      if (score > 0) {
-        submitScore(score, username);
-      }
       setGameState('end');
     }
   };
@@ -547,39 +338,44 @@ export default function App() {
 
   // --- SCREENS ---
 
-  // 1. Start Screen / Username Input
+  // 1. Start Screen
   if (gameState === 'start') {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 font-sans">
         <div className="bg-slate-900 p-8 rounded-3xl shadow-2xl max-w-md w-full text-center border border-slate-800">
           <div className="flex justify-center mb-6">
-            <Globe size={64} className="text-blue-500" />
+            <div className="relative">
+              <Globe size={64} className="text-blue-500 animate-spin-slow" />
+              <div className="absolute -bottom-2 -right-2 bg-yellow-500 p-2 rounded-full text-slate-900">
+                 <Trophy size={20} />
+              </div>
+            </div>
           </div>
-          <h1 className="text-4xl font-black text-white mb-6 tracking-tight">Polyglot<span className="text-yellow-400">ARCADE</span></h1>
+          <h1 className="text-4xl font-black text-white mb-2 tracking-tight">Polyglot<span className="text-blue-500">Master</span></h1>
+          <p className="text-slate-400 mb-8 font-medium">Which language is this?</p>
           
-          <div className="space-y-4 text-left bg-slate-950 p-6 rounded-2xl mb-8 border border-slate-800">
-            <label className="block text-slate-400 font-semibold mb-2 flex items-center gap-2">
-                <User size={18} /> Enter Your Arcade Name (Max 20 chars)
-            </label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value.slice(0, 20))}
-              placeholder="e.g., Language_Master42"
-              className="w-full p-3 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+          <div className="space-y-3 text-left bg-slate-950 p-6 rounded-2xl mb-8 border border-slate-800">
+            <div className="flex items-center text-slate-300">
+              <CheckCircle size={18} className="mr-3 text-green-400 flex-shrink-0" />
+              <span className="text-sm">Identify the language from the flag</span>
+            </div>
+            <div className="flex items-center text-slate-300">
+              <Clock size={18} className="mr-3 text-blue-400 flex-shrink-0" />
+              <span className="text-sm">Speed matters! Extra points for time.</span>
+            </div>
+            <div className="flex items-center text-slate-300">
+              <AlertCircle size={18} className="mr-3 text-red-400 flex-shrink-0" />
+              <span className="text-sm">Wrong answers carry high penalties!</span>
+            </div>
           </div>
 
           <button 
             onClick={startGame}
-            disabled={username.length < 3 || !isAuthReady}
-            className="w-full bg-blue-600 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed hover:bg-blue-500 text-white font-bold py-4 rounded-2xl text-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
+            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl text-xl transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
           >
             <Play size={24} fill="currentColor" />
-            {isAuthReady ? 'Start Game' : 'Connecting...'}
+            Start Game
           </button>
-          
-          {username.length < 3 && <p className="text-red-400 text-xs mt-3">Username must be at least 3 characters long.</p>}
         </div>
       </div>
     );
@@ -590,9 +386,11 @@ export default function App() {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 font-sans">
         <div className="bg-slate-900 p-8 rounded-3xl shadow-2xl max-w-md w-full text-center border border-slate-800 animate-in fade-in zoom-in duration-300">
-          
-          <h2 className="text-3xl font-bold text-white mb-2">Game Over!</h2>
-          <p className="text-slate-400 mb-4">Final Results for **{username}**</p>
+          <div className="inline-block p-4 rounded-full bg-yellow-500/10 mb-6">
+            <Trophy size={64} className="text-yellow-500" />
+          </div>
+          <h2 className="text-3xl font-bold text-white mb-2">Session Complete!</h2>
+          <p className="text-slate-400 mb-8">You survived 20 rounds.</p>
           
           <div className="bg-slate-950 rounded-2xl p-6 mb-8 border border-slate-800">
              <p className="text-slate-500 uppercase text-xs font-bold tracking-wider mb-2">Final Score</p>
@@ -601,13 +399,13 @@ export default function App() {
              </div>
           </div>
 
-          <Leaderboard 
-            isAuthReady={isAuthReady} 
-            finalScore={score} 
-            onStartNewGame={() => setGameState('start')} 
-            currentUserName={username}
-            scoreSubmitted={scoreSubmitted}
-          />
+          <button 
+            onClick={startGame}
+            className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-xl text-lg transition-colors flex items-center justify-center gap-2 border border-slate-700"
+          >
+            <RotateCcw size={20} />
+            Play Again
+          </button>
         </div>
       </div>
     );
@@ -640,7 +438,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* Timer Bar */}
+      {/* Timer Bar (Visual) */}
       <div className="w-full max-w-xl h-1.5 bg-slate-900 rounded-full mb-8 overflow-hidden">
         <div 
           className={`h-full transition-all duration-1000 linear ${timeLeft < 5 ? 'bg-red-500' : 'bg-blue-500'}`}
@@ -649,7 +447,7 @@ export default function App() {
       </div>
 
       {/* Question Card */}
-      <div className="bg-white text-slate-900 p-8 rounded-3xl shadow-2xl text-center min-h-[180px] flex flex-col items-center justify-center relative overflow-hidden mb-6 transition-all">
+      <div className="bg-white text-slate-900 p-8 rounded-3xl shadow-2xl text-center min-h-[180px] flex flex-col items-center justify-center relative overflow-hidden mb-6 transition-all w-full max-w-xl">
           <span className="absolute top-4 left-6 text-6xl text-slate-200 font-serif leading-none select-none">“</span>
           <h2 className="text-2xl md:text-3xl font-medium z-10 leading-relaxed max-w-prose">
             {currentQ?.text}
