@@ -1,50 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Clock, RotateCcw, Play, CheckCircle, XCircle, Globe, SkipForward, AlertCircle } from 'lucide-react';
 
-// --- DATASET (Same as V7) ---
+// --- DATASET ---
+// Added 'region' property for confusing option logic
 const LANGUAGES = [
-  // LATIN FAMILY
-  { id: 'es', name: 'Spanish', countryCode: 'es', family: 'latin' },
-  { id: 'fr', name: 'French', countryCode: 'fr', family: 'latin' },
-  { id: 'de', name: 'German', countryCode: 'de', family: 'latin' },
-  { id: 'it', name: 'Italian', countryCode: 'it', family: 'latin' },
-  { id: 'pt', name: 'Portuguese', countryCode: 'pt', family: 'latin' },
-  { id: 'br', name: 'Portuguese (Brazil)', countryCode: 'br', family: 'latin' },
-  { id: 'nl', name: 'Dutch', countryCode: 'nl', family: 'latin' },
-  { id: 'tr', name: 'Turkish', countryCode: 'tr', family: 'latin' },
-  { id: 'se', name: 'Swedish', countryCode: 'se', family: 'latin' },
-  { id: 'no', name: 'Norwegian', countryCode: 'no', family: 'latin' },
-  { id: 'dk', name: 'Danish', countryCode: 'dk', family: 'latin' },
-  { id: 'fi', name: 'Finnish', countryCode: 'fi', family: 'latin' },
-  { id: 'pl', name: 'Polish', countryCode: 'pl', family: 'latin' },
-  { id: 'cz', name: 'Czech', countryCode: 'cz', family: 'latin' },
-  { id: 'hu', name: 'Hungarian', countryCode: 'hu', family: 'latin' },
-  { id: 'vn', name: 'Vietnamese', countryCode: 'vn', family: 'latin' },
-  { id: 'id', name: 'Indonesian', countryCode: 'id', family: 'latin' },
-  { id: 'sw', name: 'Swahili', countryCode: 'ke', family: 'latin' },
-  { id: 'ro', name: 'Romanian', countryCode: 'ro', family: 'latin' },
-  { id: 'my', name: 'Malay', countryCode: 'my', family: 'latin' },
-  { id: 'hr', name: 'Croatian', countryCode: 'hr', family: 'latin' },
-  { id: 'rs', name: 'Serbian', countryCode: 'rs', family: 'latin' }, 
+  // LATIN FAMILY (Western Europe/Nordic)
+  { id: 'es', name: 'Spanish', countryCode: 'es', family: 'latin', region: 'romance' },
+  { id: 'fr', name: 'French', countryCode: 'fr', family: 'latin', region: 'romance' },
+  { id: 'it', name: 'Italian', countryCode: 'it', family: 'latin', region: 'romance' },
+  { id: 'pt', name: 'Portuguese', countryCode: 'pt', family: 'latin', region: 'romance' },
+  { id: 'br', name: 'Portuguese (Brazil)', countryCode: 'br', family: 'latin', region: 'romance' },
+  { id: 'ro', name: 'Romanian', countryCode: 'ro', family: 'latin', region: 'romance' },
+  { id: 'de', name: 'German', countryCode: 'de', family: 'latin', region: 'germanic' },
+  { id: 'nl', name: 'Dutch', countryCode: 'nl', family: 'latin', region: 'germanic' },
+  { id: 'se', name: 'Swedish', countryCode: 'se', family: 'latin', region: 'nordic' },
+  { id: 'no', name: 'Norwegian', countryCode: 'no', family: 'latin', region: 'nordic' },
+  { id: 'dk', name: 'Danish', countryCode: 'dk', family: 'latin', region: 'nordic' },
+  { id: 'fi', name: 'Finnish', countryCode: 'fi', family: 'latin', region: 'nordic' }, // Finno-Ugric, but geographically Nordic
 
-  // CYRILLIC / GREEK FAMILY
-  { id: 'ru', name: 'Russian', countryCode: 'ru', family: 'cyrillic' },
-  { id: 'ua', name: 'Ukrainian', countryCode: 'ua', family: 'cyrillic' },
-  { id: 'bg', name: 'Bulgarian', countryCode: 'bg', family: 'cyrillic' },
-  { id: 'gr', name: 'Greek', countryCode: 'gr', family: 'cyrillic' },
+  // LATIN FAMILY (Eastern Europe/Others)
+  { id: 'pl', name: 'Polish', countryCode: 'pl', family: 'latin', region: 'slavic' },
+  { id: 'cz', name: 'Czech', countryCode: 'cz', family: 'latin', region: 'slavic' },
+  { id: 'hu', name: 'Hungarian', countryCode: 'hu', family: 'latin', region: 'slavic' }, // Magiar, but surrounded by Slavic/Latin
+  { id: 'hr', name: 'Croatian', countryCode: 'hr', family: 'latin', region: 'slavic' },
+  { id: 'rs', name: 'Serbian (Latin)', countryCode: 'rs', family: 'latin', region: 'slavic' },
+  { id: 'tr', name: 'Turkish', countryCode: 'tr', family: 'latin', region: 'other_latin' },
+  { id: 'id', name: 'Indonesian', countryCode: 'id', family: 'latin', region: 'other_latin' },
+  { id: 'vn', name: 'Vietnamese', countryCode: 'vn', family: 'latin', region: 'other_latin' },
+  { id: 'sw', name: 'Swahili', countryCode: 'ke', family: 'latin', region: 'other_latin' },
 
-  // ASIAN / COMPLEX FAMILY
-  { id: 'jp', name: 'Japanese', countryCode: 'jp', family: 'asian' },
-  { id: 'kr', name: 'Korean', countryCode: 'kr', family: 'asian' },
-  { id: 'cn', name: 'Chinese', countryCode: 'cn', family: 'asian' },
-  { id: 'sa', name: 'Arabic', countryCode: 'sa', family: 'asian' },
-  { id: 'in', name: 'Hindi', countryCode: 'in', family: 'asian' },
-  { id: 'th', name: 'Thai', countryCode: 'th', family: 'asian' },
-  { id: 'il', name: 'Hebrew', countryCode: 'il', family: 'asian' }
+  // COMPLEX SCRIPTS
+  { id: 'ru', name: 'Russian', countryCode: 'ru', family: 'cyrillic', region: 'cyrillic' },
+  { id: 'ua', name: 'Ukrainian', countryCode: 'ua', family: 'cyrillic', region: 'cyrillic' },
+  { id: 'bg', name: 'Bulgarian', countryCode: 'bg', family: 'cyrillic', region: 'cyrillic' },
+  { id: 'gr', name: 'Greek', countryCode: 'gr', family: 'cyrillic', region: 'cyrillic' }, // Grouped visually
+  { id: 'jp', name: 'Japanese', countryCode: 'jp', family: 'asian', region: 'east_asian' },
+  { id: 'kr', name: 'Korean', countryCode: 'kr', family: 'asian', region: 'east_asian' },
+  { id: 'cn', name: 'Chinese', countryCode: 'cn', family: 'asian', region: 'east_asian' },
+  { id: 'th', name: 'Thai', countryCode: 'th', family: 'asian', region: 'southeast_asian' },
+  { id: 'sa', name: 'Arabic', countryCode: 'sa', family: 'asian', region: 'middle_eastern' },
+  { id: 'il', name: 'Hebrew', countryCode: 'il', family: 'asian', region: 'middle_eastern' },
+  { id: 'in', name: 'Hindi', countryCode: 'in', family: 'asian', region: 'south_asian' }
 ];
 
 const QUESTION_POOL = [
-  // --- EASY (Full Sentences / Clear Grammar) ---
+  // --- EASY (Full Sentences / Clear Grammar) --- (3 required)
   { text: "El gato duerme en la cama.", langId: 'es', difficulty: 'easy' },
   { text: "Je voudrais un croissant, s'il vous plaît.", langId: 'fr', difficulty: 'easy' },
   { text: "Das Wetter ist heute sehr schön.", langId: 'de', difficulty: 'easy' },
@@ -52,128 +52,57 @@ const QUESTION_POOL = [
   { text: "Eu gosto muito de música.", langId: 'pt', difficulty: 'easy' },
   { text: "Het is vandaag een mooie dag.", langId: 'nl', difficulty: 'easy' },
   { text: "Меня зовут Александр.", langId: 'ru', difficulty: 'easy' },
-  { text: "おはようございます", langId: 'jp', difficulty: 'easy' }, 
   { text: "안녕하세요, 반가워요.", langId: 'kr', difficulty: 'easy' }, 
-  { text: "今天天气很好.", langId: 'cn', difficulty: 'easy' },
-  { text: "أحب شرب القهوة في الصباح.", langId: 'sa', difficulty: 'easy' },
-  { text: "La vita è bella.", langId: 'it', difficulty: 'easy' },
   { text: "Bugün hava çok güzel.", langId: 'tr', difficulty: 'easy' },
   { text: "Dziecko bawi się w parku.", langId: 'pl', difficulty: 'easy' },
   { text: "Jag älskar att läsa böcker.", langId: 'se', difficulty: 'easy' },
-  { text: "Saya suka makan nasi goreng.", langId: 'id', difficulty: 'easy' },
-  { text: "Tôi đang học tiếng Việt.", langId: 'vn', difficulty: 'easy' },
-  { text: "Ninaenda sokoni kununua chakula.", langId: 'sw', difficulty: 'easy' },
-  { text: "Jeg liker å gå på tur i skogen.", langId: 'no', difficulty: 'easy' },
-  { text: "Minä rakastan sinua.", langId: 'fi', difficulty: 'easy' },
-  { text: "O tempo está muito bom hoje.", langId: 'br', difficulty: 'easy' },
-  { text: "Uau, ce frumos este aici!", langId: 'ro', difficulty: 'easy' },
-  { text: "Danes je lep dan.", langId: 'hr', difficulty: 'easy' },
 
-  // --- MEDIUM (Phrases / Greetings / Short Sentences) ---
-  { text: "Καλημέρα", langId: 'gr', difficulty: 'medium' },
-  { text: "Teşekkür ederim", langId: 'tr', difficulty: 'medium' },
-  { text: "Tack så mycket", langId: 'se', difficulty: 'medium' },
-  { text: "Hvordan har du det?", langId: 'no', difficulty: 'medium' },
-  { text: "Mange tak", langId: 'dk', difficulty: 'medium' },
-  { text: "Dziękuję bardzo", langId: 'pl', difficulty: 'medium' },
-  { text: "Ahoj, jak se máš?", langId: 'cz', difficulty: 'medium' },
-  { text: "नमस्ते", langId: 'in', difficulty: 'medium' },
-  { text: "Xin chào", langId: 'vn', difficulty: 'medium' },
-  { text: "Apa kabar?", langId: 'id', difficulty: 'medium' },
-  { text: "Hakuna Matata", langId: 'sw', difficulty: 'medium' },
-  { text: "שָׁלוֹם עֲלֵיכֶם", langId: 'il', difficulty: 'medium' }, // Shalom Aleichem
-  { text: "Selamat pagi", langId: 'my', difficulty: 'medium' },
-  { text: "Слава Україні", langId: 'ua', difficulty: 'medium' },
-  { text: "Mulțumesc", langId: 'ro', difficulty: 'medium' },
-  { text: "Kiitos paljon", langId: 'fi', difficulty: 'medium' },
-  { text: "Jó napot", langId: 'hu', difficulty: 'medium' },
-  { text: "Dobrý den", langId: 'cz', difficulty: 'medium' },
-  { text: "Bom dia", langId: 'pt', difficulty: 'medium' },
-  { text: "בוקר טוב", langId: 'il', difficulty: 'medium' }, // Boker Tov
-  { text: "ขอบคุณ", langId: 'th', difficulty: 'medium' }, // Khob khun
-  { text: "شكراً", langId: 'sa', difficulty: 'medium' }, // Shukran
-  { text: "Tot ziens", langId: 'nl', difficulty: 'medium' },
-  { text: "Guten Tag", langId: 'de', difficulty: 'medium' },
-  // New Medium Additions
-  { text: "Selamat malam", langId: 'id', difficulty: 'medium' },
-  { text: "Dobranoc", langId: 'pl', difficulty: 'medium' },
-  { text: "Hyvää huomenta", langId: 'fi', difficulty: 'medium' },
-  { text: "Güle güle", langId: 'tr', difficulty: 'medium' },
-  { text: "Tervetuloa", langId: 'fi', difficulty: 'medium' },
-  { text: "Entschuldigung", langId: 'de', difficulty: 'medium' },
-  { text: "Perdón", langId: 'es', difficulty: 'medium' },
-  { text: "Undskyld", langId: 'dk', difficulty: 'medium' },
-  { text: "Var så god", langId: 'se', difficulty: 'medium' },
-  { text: "Sziasztok", langId: 'hu', difficulty: 'medium' },
-  { text: "Merhaba", langId: 'tr', difficulty: 'medium' },
-  { text: "Buna ziua", langId: 'ro', difficulty: 'medium' },
-  { text: "Undskyld", langId: 'no', difficulty: 'medium' },
-  { text: "Ciao", langId: 'it', difficulty: 'medium' },
-  { text: "Hola", langId: 'es', difficulty: 'medium' },
-  { text: "Hallo", langId: 'nl', difficulty: 'medium' },
-  { text: "Prego", langId: 'it', difficulty: 'medium' },
+  // --- MEDIUM (Phrases / Greetings / Short Sentences) --- (4 required)
+  { text: "Καλημέρα", langId: 'gr', difficulty: 'medium' }, // Greek
+  { text: "Tack så mycket", langId: 'se', difficulty: 'medium' }, // Swedish
+  { text: "Dziękuję bardzo", langId: 'pl', difficulty: 'medium' }, // Polish
+  { text: "Ahoj, jak se máš?", langId: 'cz', difficulty: 'medium' }, // Czech
+  { text: "नमस्ते", langId: 'in', difficulty: 'medium' }, // Hindi
+  { text: "Xin chào", langId: 'vn', difficulty: 'medium' }, // Vietnamese
+  { text: "Apa kabar?", langId: 'id', difficulty: 'medium' }, // Indonesian
+  { text: "Hakuna Matata", langId: 'sw', difficulty: 'medium' }, // Swahili
+  { text: "Selamat pagi", langId: 'my', difficulty: 'medium' }, // Malay
+  { text: "Слава Україні", langId: 'ua', difficulty: 'medium' }, // Ukrainian
+  { text: "Kiitos paljon", langId: 'fi', difficulty: 'medium' }, // Finnish
+  { text: "Jó napot", langId: 'hu', difficulty: 'medium' }, // Hungarian
+  { text: "Guten Tag", langId: 'de', difficulty: 'medium' }, // German
+  { text: "Tot ziens", langId: 'nl', difficulty: 'medium' }, // Dutch
+  { text: "Teşekkür ederim", langId: 'tr', difficulty: 'medium' }, // Turkish
 
-  // --- HARD (False Friends, Single Words, Tricky Spellings) ---
-  { text: "Kippis", langId: 'fi', difficulty: 'hard' }, 
-  { text: "Egészségedre", langId: 'hu', difficulty: 'hard' }, 
-  { text: "สวัสดี", langId: 'th', difficulty: 'hard' }, 
-  { text: "Öl", langId: 'de', difficulty: 'hard' }, // Oil (looks like nothing)
-  { text: "Burro", langId: 'it', difficulty: 'hard' }, // Butter
-  { text: "Gift", langId: 'de', difficulty: 'hard' }, // Poison
-  { text: "Благодаря", langId: 'bg', difficulty: 'hard' }, 
-  { text: "Hvala", langId: 'hr', difficulty: 'hard' }, 
-  { text: "Živjeli", langId: 'rs', difficulty: 'hard' }, 
-  { text: "Obrigado", langId: 'br', difficulty: 'hard' },
-  { text: "ありがとう", langId: 'jp', difficulty: 'hard' }, 
-  { text: "Grazie", langId: 'it', difficulty: 'hard' },
-  { text: "Merci", langId: 'fr', difficulty: 'hard' },
-  { text: "Danke", langId: 'de', difficulty: 'hard' },
-  { text: "Спасибо", langId: 'ru', difficulty: 'hard' },
-  { text: "Glass", langId: 'se', difficulty: 'hard' }, // Ice Cream
-  { text: "Pain", langId: 'fr', difficulty: 'hard' }, // Bread
-  { text: "Barn", langId: 'se', difficulty: 'hard' }, // Child
-  { text: "Pies", langId: 'pl', difficulty: 'hard' }, // Dog
-  { text: "Rot", langId: 'de', difficulty: 'hard' }, // Red
-  { text: "Hell", langId: 'de', difficulty: 'hard' }, // Bright
-  { text: "Bad", langId: 'de', difficulty: 'hard' }, // Bath
-  { text: "Camera", langId: 'it', difficulty: 'hard' }, // Room
-  { text: "Rien", langId: 'fr', difficulty: 'hard' }, // Nothing
-  { text: "Água", langId: 'pt', difficulty: 'hard' }, 
-  { text: "Agua", langId: 'es', difficulty: 'hard' }, 
-  { text: "Coin", langId: 'fr', difficulty: 'hard' }, // Corner
-  { text: "Chair", langId: 'fr', difficulty: 'hard' }, // Flesh
-  { text: "Brief", langId: 'de', difficulty: 'hard' }, // Letter
-  { text: "Wand", langId: 'de', difficulty: 'hard' }, // Wall
-  { text: "Rat", langId: 'de', difficulty: 'hard' }, // Council
-  { text: "Vatten", langId: 'se', difficulty: 'hard' },
-  { text: "Moi", langId: 'fi', difficulty: 'hard' }, // Hi
-  { text: "Szia", langId: 'hu', difficulty: 'hard' }, // Hi
-  { text: "Ano", langId: 'cz', difficulty: 'hard' }, // Yes
-  { text: "Hayır", langId: 'tr', difficulty: 'hard' }, // No
-  // New Hard Additions (Super Tricky)
-  { text: "Fart", langId: 'se', difficulty: 'hard' }, // Speed
-  { text: "Slut", langId: 'se', difficulty: 'hard' }, // End
-  { text: "Kiss", langId: 'se', difficulty: 'hard' }, // Pee
-  { text: "Bra", langId: 'se', difficulty: 'hard' }, // Good
-  { text: "Men", langId: 'nl', difficulty: 'hard' }, // People
-  { text: "Mist", langId: 'de', difficulty: 'hard' }, // Crap/Dung
-  { text: "Fast", langId: 'de', difficulty: 'hard' }, // Almost
-  { text: "Angel", langId: 'de', difficulty: 'hard' }, // Fishing Rod
-  { text: "Rock", langId: 'de', difficulty: 'hard' }, // Skirt
-  { text: "Preservativo", langId: 'it', difficulty: 'hard' }, // Condom
-  { text: "Embarazada", langId: 'es', difficulty: 'hard' }, // Pregnant
-  { text: "Sensible", langId: 'fr', difficulty: 'hard' }, // Sensitive
-  { text: "Actualmente", langId: 'es', difficulty: 'hard' }, // Currently
-  { text: "Librería", langId: 'es', difficulty: 'hard' }, // Bookstore
-  { text: "Carpeta", langId: 'es', difficulty: 'hard' }, // Folder
-  { text: "Sim", langId: 'pt', difficulty: 'hard' }, // Yes (looks like Sim card)
-  { text: "Bier", langId: 'de', difficulty: 'hard' }, // Beer
-  { text: "Beer", langId: 'nl', difficulty: 'hard' }, // Bear
-  { text: "Vila", langId: 'se', difficulty: 'hard' }, // Rest
-  { text: "Gata", langId: 'se', difficulty: 'hard' }, // Street (vs Cat in latin)
-  { text: "Kakor", langId: 'se', difficulty: 'hard' }, // Cookies
-  { text: "Rar", langId: 'se', difficulty: 'hard' }, // Cute/Sweet (vs Rare/Weird)
-  { text: "Full", langId: 'se', difficulty: 'hard' }, // Drunk
+  // --- HARD (False Friends, Single Words, Tricky Spellings) --- (5 required)
+  { text: "Öl", langId: 'de', difficulty: 'hard' }, // Oil (German)
+  { text: "Gift", langId: 'de', difficulty: 'hard' }, // Poison (German)
+  { text: "Fart", langId: 'se', difficulty: 'hard' }, // Speed (Swedish)
+  { text: "Slut", langId: 'se', difficulty: 'hard' }, // End (Swedish)
+  { text: "Pain", langId: 'fr', difficulty: 'hard' }, // Bread (French)
+  { text: "Burro", langId: 'it', difficulty: 'hard' }, // Butter (Italian)
+  { text: "Pies", langId: 'pl', difficulty: 'hard' }, // Dog (Polish)
+  { text: "Brief", langId: 'de', difficulty: 'hard' }, // Letter (German)
+  { text: "Embarazada", langId: 'es', difficulty: 'hard' }, // Pregnant (Spanish)
+  { text: "Mist", langId: 'de', difficulty: 'hard' }, // Rubbish/Dung (German)
+  { text: "Kippis", langId: 'fi', difficulty: 'hard' }, // Cheers (Finnish)
+  { text: "Egészségedre", langId: 'hu', difficulty: 'hard' }, // Cheers (Hungarian)
+  { text: "Vila", langId: 'se', difficulty: 'hard' }, // Rest (Swedish)
+  { text: "Gata", langId: 'se', difficulty: 'hard' }, // Street (Swedish)
+  { text: "Rien", langId: 'fr', difficulty: 'hard' }, // Nothing (French)
+  { text: "Bier", langId: 'de', difficulty: 'hard' }, // Beer (German)
+  { text: "Beer", langId: 'nl', difficulty: 'hard' }, // Bear (Dutch)
+  { text: "Sim", langId: 'pt', difficulty: 'hard' }, // Yes (Portuguese)
+  { text: "Ano", langId: 'cz', difficulty: 'hard' }, // Yes (Czech)
+  { text: "Hayır", langId: 'tr', difficulty: 'hard' }, // No (Turkish)
+  { text: "ありがとう", langId: 'jp', difficulty: 'hard' }, // Arigato (Japanese)
+  { text: "안녕하세요", langId: 'kr', difficulty: 'hard' }, // Annyeonghaseyo (Korean)
+  { text: "你好", langId: 'cn', difficulty: 'hard' }, // Nǐ hǎo (Chinese)
+  { text: "สวัสดี", langId: 'th', difficulty: 'hard' }, // Sawatdee (Thai)
+  { text: "شكراً", langId: 'sa', difficulty: 'hard' }, // Shukran (Arabic)
+  { text: "שלום", langId: 'il', difficulty: 'hard' }, // Shalom (Hebrew)
+  { text: "добре", langId: 'bg', difficulty: 'hard' }, // Dobre (Bulgarian)
+  { text: "Спасибо", langId: 'ru', difficulty: 'hard' } // Spasibo (Russian)
 ];
 
 // --- UTILS ---
@@ -182,19 +111,43 @@ const shuffle = (array) => [...array].sort(() => Math.random() - 0.5);
 
 const getOptions = (correctLangId) => {
   const correctLang = LANGUAGES.find(l => l.id === correctLangId);
+  const correctFamily = correctLang.family;
+  const correctRegion = correctLang.region;
   
-  // 1. Filter for same family
+  // 1. Prioritize same region (e.g., Spanish -> Italian, French, Portuguese)
   let potentialDistractors = LANGUAGES.filter(
-    l => l.id !== correctLangId && l.family === correctLang.family
+    l => l.id !== correctLangId && l.region === correctRegion
   );
   
-  // 2. Fallback: If not enough in family (needs 3), add randoms from anywhere
+  // 2. Secondary: Same family/script (e.g., German -> Swedish, Dutch)
   if (potentialDistractors.length < 3) {
-    const otherLangs = LANGUAGES.filter(l => l.id !== correctLangId && l.family !== correctLang.family);
-    potentialDistractors = [...potentialDistractors, ...otherLangs];
+    const familyFallback = LANGUAGES.filter(
+        l => l.id !== correctLangId && l.family === correctFamily && l.region !== correctRegion
+    );
+    potentialDistractors = [...potentialDistractors, ...familyFallback];
+  }
+  
+  // 3. Fallback: Any language in the same script family (e.g., Japanese -> Korean, Chinese)
+  if (potentialDistractors.length < 3) {
+    const tertiaryFallback = LANGUAGES.filter(
+        l => l.id !== correctLangId && l.family === correctFamily
+    );
+    potentialDistractors = [...potentialDistractors, ...tertiaryFallback];
   }
 
-  const shuffledDistractors = shuffle(potentialDistractors).slice(0, 3);
+  // Ensure unique distractors and take the first 3
+  const uniqueDistractors = Array.from(new Set(potentialDistractors.map(l => l.id)))
+                               .map(id => LANGUAGES.find(l => l.id === id));
+                               
+  const shuffledDistractors = shuffle(uniqueDistractors).slice(0, 3);
+  
+  // Ensure we always have 4 options total
+  if (shuffledDistractors.length < 3) {
+      // If we still can't find 3, fill with random unique options outside the correct one
+      const trulyRandom = LANGUAGES.filter(l => l.id !== correctLangId && !shuffledDistractors.includes(l));
+      shuffledDistractors.push(...shuffle(trulyRandom).slice(0, 3 - shuffledDistractors.length));
+  }
+
   return shuffle([...shuffledDistractors, correctLang]);
 };
 
@@ -212,10 +165,13 @@ export default function LanguageGame() {
   const [penaltyAmount, setPenaltyAmount] = useState(0);
 
   // --- Game Logic ---
-
+  
   const getDifficulty = (roundIndex) => {
-    if (roundIndex < 4) return 'easy';
-    if (roundIndex < 12) return 'medium';
+    // 3 easy (0, 1, 2)
+    if (roundIndex < 3) return 'easy';
+    // 4 medium (3, 4, 5, 6)
+    if (roundIndex < 7) return 'medium';
+    // 5 hard (7, 8, 9, 10, 11)
     return 'hard';
   };
 
@@ -227,11 +183,11 @@ export default function LanguageGame() {
   };
 
   const startGame = () => {
-    const easyQ = shuffle(QUESTION_POOL.filter(q => q.difficulty === 'easy')).slice(0, 4);
-    const mediumQ = shuffle(QUESTION_POOL.filter(q => q.difficulty === 'medium')).slice(0, 8);
-    const hardQ = shuffle(QUESTION_POOL.filter(q => q.difficulty === 'hard')).slice(0, 8);
+    const easyQ = shuffle(QUESTION_POOL.filter(q => q.difficulty === 'easy')).slice(0, 3); // 3 rounds
+    const mediumQ = shuffle(QUESTION_POOL.filter(q => q.difficulty === 'medium')).slice(0, 4); // 4 rounds
+    const hardQ = shuffle(QUESTION_POOL.filter(q => q.difficulty === 'hard')).slice(0, 5); // 5 rounds
     
-    const finalSet = [...easyQ, ...mediumQ, ...hardQ];
+    const finalSet = [...easyQ, ...mediumQ, ...hardQ]; // Total 12 rounds
     
     setRoundQuestions(finalSet);
     setCurrentRound(0);
@@ -390,7 +346,7 @@ export default function LanguageGame() {
             <Trophy size={64} className="text-yellow-500" />
           </div>
           <h2 className="text-3xl font-bold text-white mb-2">Session Complete!</h2>
-          <p className="text-slate-400 mb-8">You survived 20 rounds.</p>
+          <p className="text-slate-400 mb-8">You survived 12 rounds.</p>
           
           <div className="bg-slate-950 rounded-2xl p-6 mb-8 border border-slate-800">
              <p className="text-slate-500 uppercase text-xs font-bold tracking-wider mb-2">Final Score</p>
@@ -422,7 +378,7 @@ export default function LanguageGame() {
         <div className="flex items-center gap-3">
           <div className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5">
             <span className="text-xs font-bold text-slate-400 tracking-wider">
-              ROUND {currentRound + 1}<span className="text-slate-600">/20</span>
+              ROUND {currentRound + 1}<span className="text-slate-600">/12</span>
             </span>
           </div>
           <span className={`text-xs font-bold px-3 py-1.5 rounded-lg border ${getDifficultyColor(difficulty)} uppercase tracking-wider`}>
@@ -438,7 +394,7 @@ export default function LanguageGame() {
         </div>
       </div>
 
-      {/* Timer Bar (Visual) */}
+      {/* Timer Bar */}
       <div className="w-full max-w-xl h-1.5 bg-slate-900 rounded-full mb-8 overflow-hidden">
         <div 
           className={`h-full transition-all duration-1000 linear ${timeLeft < 5 ? 'bg-red-500' : 'bg-blue-500'}`}
