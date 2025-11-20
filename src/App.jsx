@@ -218,7 +218,8 @@ function Leaderboard({ isAuthReady, finalScore, onStartNewGame, currentUserName,
     // 1. Initialize Firebase and Listener
     useEffect(() => {
         // Skip initialization if no firebase config is present
-        if (!isAuthReady || !firebaseConfig || !Object.keys(firebaseConfig).length) {
+        if (!isAuthReady || !firebaseConfig || !Object.keys(firebaseConfig).length || firebaseConfig.apiKey === "PUBLIC_PLACEHOLDER_KEY") {
+             console.warn("Leaderboard is using placeholder config.");
              setIsLoading(false);
              return;
         }
@@ -229,7 +230,6 @@ function Leaderboard({ isAuthReady, finalScore, onStartNewGame, currentUserName,
             setDb(firestoreDb);
             
             // Define the public collection path for scores
-            // NOTE: We are forcing the query to the simplest public path.
             const q = collection(firestoreDb, `artifacts/${appId}/public/data/leaderboard`);
             
             const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -351,9 +351,9 @@ export default function App() {
 
   // 1. Firebase Initialization and Auth
   useEffect(() => {
-    // Only proceed if firebaseConfig is available
-    if (!firebaseConfig || !Object.keys(firebaseConfig).length) {
-        console.warn("Firebase config not available. Leaderboard disabled.");
+    // Check using the new injected variables
+    if (!firebaseConfig || !Object.keys(firebaseConfig).length || firebaseConfig.apiKey === "PUBLIC_PLACEHOLDER_KEY") {
+        console.warn("Firebase config is using PLACEHOLDER. Leaderboard disabled.");
         setIsAuthReady(true);
         return;
     }
@@ -366,7 +366,6 @@ export default function App() {
         setAuth(firebaseAuth);
 
         const authenticate = async () => {
-            // FIX: If initialAuthToken is missing (Vercel), fall back to anonymous sign-in immediately.
             if (initialAuthToken && initialAuthToken !== "null" && initialAuthToken !== "undefined") {
                 await signInWithCustomToken(firebaseAuth, initialAuthToken);
             } else {
@@ -642,7 +641,7 @@ export default function App() {
         </div>
       </div>
 
-      /* Timer Bar */
+      {/* Timer Bar */}
       <div className="w-full max-w-xl h-1.5 bg-slate-900 rounded-full mb-8 overflow-hidden">
         <div 
           className={`h-full transition-all duration-1000 linear ${timeLeft < 5 ? 'bg-red-500' : 'bg-blue-500'}`}
@@ -650,64 +649,62 @@ export default function App() {
         />
       </div>
 
-      /* Question Card */
-      <div className="w-full max-w-xl flex-grow flex flex-col justify-start mb-8">
-        <div className="bg-white text-slate-900 p-8 rounded-3xl shadow-2xl text-center min-h-[180px] flex flex-col items-center justify-center relative overflow-hidden mb-6 transition-all">
+      {/* Question Card */}
+      <div className="bg-white text-slate-900 p-8 rounded-3xl shadow-2xl text-center min-h-[180px] flex flex-col items-center justify-center relative overflow-hidden mb-6 transition-all">
           <span className="absolute top-4 left-6 text-6xl text-slate-200 font-serif leading-none select-none">“</span>
           <h2 className="text-2xl md:text-3xl font-medium z-10 leading-relaxed max-w-prose">
             {currentQ?.text}
           </h2>
           <span className="absolute bottom-0 right-6 text-6xl text-slate-200 font-serif leading-none select-none">”</span>
-        </div>
-
-        /* Flags Grid */
-        <div className="grid grid-cols-2 gap-4">
-          {options.map((opt) => {
-            let btnClass = "bg-slate-900 border-2 border-slate-800 hover:border-slate-600 hover:bg-slate-800"; // Default
-            
-            if (isAnswered) {
-              if (opt.id === currentQ.langId) {
-                btnClass = "bg-green-500/20 border-2 border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.3)]"; 
-              } else if (selectedOption === opt.id) {
-                btnClass = "bg-red-500/20 border-2 border-red-500 opacity-50"; 
-              } else {
-                btnClass = "bg-slate-900 border-slate-800 opacity-20 grayscale";
-              }
-            }
-
-            return (
-              <button
-                key={opt.id}
-                onClick={() => handleAnswer(opt.id)}
-                disabled={isAnswered}
-                className={`group relative h-28 rounded-2xl transition-all duration-200 flex items-center justify-center overflow-hidden ${btnClass} active:scale-95`}
-              >
-                /* Flag Image from CDN */
-                <img 
-                  src={`https://flagcdn.com/w160/${opt.countryCode}.png`}
-                  srcSet={`https://flagcdn.com/w320/${opt.countryCode}.png 2x`}
-                  alt={opt.name}
-                  className="w-24 h-auto object-cover shadow-sm transform transition-transform group-hover:scale-110 duration-300"
-                />
-              </button>
-            );
-          })}
-        </div>
-
-        /* Pass Button */
-        <div className="mt-6 flex justify-center">
-          <button 
-            onClick={handlePass}
-            disabled={isAnswered}
-            className="flex items-center gap-2 text-slate-500 hover:text-slate-300 px-6 py-3 rounded-xl hover:bg-slate-900 transition-colors disabled:opacity-0"
-          >
-            <SkipForward size={20} />
-            <span className="font-semibold">Pass Question</span>
-          </button>
-        </div>
       </div>
 
-      /* Feedback Overlay */
+      {/* Flags Grid */}
+      <div className="grid grid-cols-2 gap-4 w-full max-w-xl">
+        {options.map((opt) => {
+          let btnClass = "bg-slate-900 border-2 border-slate-800 hover:border-slate-600 hover:bg-slate-800"; // Default
+          
+          if (isAnswered) {
+            if (opt.id === currentQ.langId) {
+              btnClass = "bg-green-500/20 border-2 border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.3)]"; 
+            } else if (selectedOption === opt.id) {
+              btnClass = "bg-red-500/20 border-2 border-red-500 opacity-50"; 
+            } else {
+              btnClass = "bg-slate-900 border-slate-800 opacity-20 grayscale";
+            }
+          }
+
+          return (
+            <button
+              key={opt.id}
+              onClick={() => handleAnswer(opt.id)}
+              disabled={isAnswered}
+              className={`group relative h-28 rounded-2xl transition-all duration-200 flex items-center justify-center overflow-hidden ${btnClass} active:scale-95`}
+            >
+              {/* Flag Image from CDN */}
+              <img 
+                src={`https://flagcdn.com/w160/${opt.countryCode}.png`}
+                srcSet={`https://flagcdn.com/w320/${opt.countryCode}.png 2x`}
+                alt={opt.name}
+                className="w-24 h-auto object-cover shadow-sm transform transition-transform group-hover:scale-110 duration-300"
+              />
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Pass Button */}
+      <div className="mt-6 flex justify-center w-full max-w-xl">
+        <button 
+          onClick={handlePass}
+          disabled={isAnswered}
+          className="flex items-center gap-2 text-slate-500 hover:text-slate-300 px-6 py-3 rounded-xl hover:bg-slate-900 transition-colors disabled:opacity-0"
+        >
+          <SkipForward size={20} />
+          <span className="font-semibold">Pass Question</span>
+        </button>
+      </div>
+
+      {/* Feedback Overlay */}
       {feedback && (
         <div className={`fixed bottom-24 left-1/2 transform -translate-x-1/2 px-6 py-4 rounded-2xl font-bold shadow-2xl animate-in slide-in-from-bottom-4 fade-in zoom-in duration-300 border flex flex-col items-center
           ${feedback === 'correct' ? 'bg-slate-900 border-green-500/50 text-green-400' : 
