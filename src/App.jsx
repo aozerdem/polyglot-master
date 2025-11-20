@@ -113,12 +113,12 @@ const getOptions = (correctLangId) => {
   const correctFamily = correctLang.family;
   const correctRegion = correctLang.region;
   
-  // 1. Prioritize same region (e.g., Spanish -> Italian, French, Portuguese)
+  // 1. Prioritize same region
   let potentialDistractors = LANGUAGES.filter(
     l => l.id !== correctLangId && l.region === correctRegion
   );
   
-  // 2. Secondary: Same family/script (e.g., German -> Swedish, Dutch)
+  // 2. Secondary: Same family/script
   if (potentialDistractors.length < 3) {
     const familyFallback = LANGUAGES.filter(
         l => l.id !== correctLangId && l.family === correctFamily && l.region !== correctRegion
@@ -126,7 +126,7 @@ const getOptions = (correctLangId) => {
     potentialDistractors = [...potentialDistractors, ...familyFallback];
   }
   
-  // 3. Fallback: Any language in the same script family (e.g., Japanese -> Korean, Chinese)
+  // 3. Fallback: Any language in the same script family
   if (potentialDistractors.length < 3) {
     const tertiaryFallback = LANGUAGES.filter(
         l => l.id !== correctLangId && l.family === correctFamily
@@ -142,18 +142,12 @@ const getOptions = (correctLangId) => {
   
   // Ensure we always have 4 options total
   if (shuffledDistractors.length < 3) {
-      // If we still can't find 3, fill with random unique options outside the correct one
       const trulyRandom = LANGUAGES.filter(l => l.id !== correctLangId && !shuffledDistractors.includes(l));
       shuffledDistractors.push(...shuffle(trulyRandom).slice(0, 3 - shuffledDistractors.length));
   }
 
   return shuffle([...shuffledDistractors, correctLang]);
 };
-
-// Image URLs for the custom penguin character
-// Using the uploaded image URL for the cool penguin and a generated URL for the sad one.
-const HAPPY_PENGUIN_URL = "https://placehold.co/96x96/2C5DA0/FFFFFF?text=COOL+PENGUIN";
-const SAD_PENGUIN_URL = "https://placehold.co/96x96/D9534F/FFFFFF?text=SAD+PENGUIN";
 
 // --- MAIN APP COMPONENT ---
 
@@ -300,43 +294,20 @@ export default function LanguageGame() {
     return "text-red-500 border-red-500 bg-red-500/10";
   };
   
-  // Custom Keyframes for character animation
+  // Custom Keyframes for a simple bounce/shake (no character)
   const customKeyframes = `
     @keyframes entry-bounce {
-      0% { transform: translateY(100px) scale(0.5); opacity: 0; }
-      60% { transform: translateY(-5px) scale(1.05); opacity: 1; }
-      100% { transform: translateY(0) scale(1); }
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
     }
     @keyframes shake-fail {
-      0%, 100% { transform: rotate(0deg); }
-      20%, 60% { transform: rotate(-5deg); }
-      40%, 80% { transform: rotate(5deg); }
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
     }
-    .animate-char-entry { animation: entry-bounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    .animate-char-shake { animation: shake-fail 0.4s ease-in-out; }
+    .animate-feedback { animation: entry-bounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .animate-shake { animation: shake-fail 0.4s ease-in-out; }
   `;
-
-  // The Penguin Character Component
-  const PenguinCharacter = () => {
-    const isCorrect = feedback === 'correct';
-    const isWrong = feedback === 'wrong';
-    const characterUrl = isCorrect 
-      ? "https://placehold.co/96x96/2C5DA0/FFFFFF?text=COOL+PENGUIN" // Replace with the actual URL of the cool penguin image
-      : "https://placehold.co/96x96/D9534F/FFFFFF?text=SAD+PENGUIN"; // Placeholder for Sad Penguin
-
-    if (!isCorrect && !isWrong) return null;
-
-    return (
-        <img
-            src={characterUrl}
-            alt={isCorrect ? "Celebrating Penguin" : "Sad Penguin"}
-            className={`w-16 h-16 mr-3 ${isCorrect ? 'animate-char-entry' : 'animate-char-shake'}`}
-            // Add fallback for image loading errors
-            onError={(e) => e.target.style.display = 'none'} 
-        />
-    );
-  };
-
 
   // --- SCREENS ---
 
@@ -344,7 +315,7 @@ export default function LanguageGame() {
   if (gameState === 'start') {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 font-sans relative">
-        <style>{customKeyframes}</style> {/* Inject custom animations */}
+        <style>{customKeyframes}</style>
 
         <div className="bg-slate-900 p-8 rounded-3xl shadow-2xl max-w-md w-full text-center border border-slate-800">
           <div className="flex justify-center mb-6">
@@ -425,7 +396,7 @@ export default function LanguageGame() {
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center p-4 font-sans text-slate-100 selection:bg-blue-500/30">
-      <style>{customKeyframes}</style> {/* Inject custom animations */}
+      <style>{customKeyframes}</style>
 
       {/* Progress Bar */}
       <div className="w-full max-w-xl bg-slate-900 rounded-full h-2 mb-4 overflow-hidden shadow-inner shadow-slate-900/50">
@@ -520,5 +491,44 @@ export default function LanguageGame() {
 
       {/* Feedback Overlay with Animations */}
       {feedback && (
-        <div className={`fixed bottom-24 left-1/2 transform -translate-x-1/2 px-6 py-4 rounded-2xl font-bold shadow-2xl animate-in slide-in-from-bottom-4 fade-in zoom-in duration-300 border flex items-center gap-3
-          ${feedback === 'correct' ? 'bg-
+        <div className={`fixed bottom-24 left-1/2 transform -translate-x-1/2 px-6 py-4 rounded-2xl font-bold shadow-2xl animate-feedback border flex items-center gap-3
+          ${feedback === 'correct' ? 'bg-slate-900 border-green-500/50 text-green-400' : 
+            feedback === 'pass' ? 'bg-slate-900 border-slate-700 text-slate-400' :
+            'bg-slate-900 border-red-500/50 text-red-400 animate-shake'}
+        `}>
+          {/* Simple Icon Feedback (No Penguin) */}
+          <div className="w-6 h-6 flex items-center justify-center">
+            {feedback === 'correct' ? (
+                <CheckCircle size={24} className="text-green-400" />
+            ) : feedback === 'wrong' ? (
+                <XCircle size={24} className="text-red-400" />
+            ) : (
+                <SkipForward size={24} className="text-slate-400" />
+            )}
+          </div>
+
+          <div>
+            {feedback === 'correct' ? (
+              <>
+                <div className="text-lg">Correct!</div>
+                <div className="text-xs font-normal mt-0 text-green-500/70">
+                  +{100 + (timeLeft*10) + (streak*10)} pts
+                </div>
+              </>
+            ) : feedback === 'pass' ? (
+               <div className="text-lg">Passed</div>
+            ) : (
+              <>
+                <div className="text-lg">Wrong!</div>
+                <div className="text-xs font-normal mt-0 text-red-500/70">
+                  It was {LANGUAGES.find(l => l.id === currentQ.langId)?.name} • -{penaltyAmount} pts
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
