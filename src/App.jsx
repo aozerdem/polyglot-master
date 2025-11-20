@@ -176,10 +176,10 @@ export default function LanguageGame() {
   };
 
   const getPenalty = (difficulty) => {
-    // UPDATED PENALTIES
-    if (difficulty === 'easy') return 300; // -300 points
-    if (difficulty === 'medium') return 200; // -200 points
-    return 100; // -100 points (hard)
+    // High Penalties (from previous request)
+    if (difficulty === 'easy') return 300; 
+    if (difficulty === 'medium') return 200; 
+    return 100;
   };
 
   const startGame = () => {
@@ -285,19 +285,46 @@ export default function LanguageGame() {
 
   // --- VISUAL HELPERS ---
   const difficulty = getDifficulty(currentRound);
-  
+  const totalRounds = 12; // Defined constant for clarity
+  const progressPercentage = ((currentRound + 1) / totalRounds) * 100;
+
   const getDifficultyColor = (diff) => {
     if (diff === 'easy') return "text-green-500 border-green-500 bg-green-500/10";
     if (diff === 'medium') return "text-yellow-500 border-yellow-500 bg-yellow-500/10";
     return "text-red-500 border-red-500 bg-red-500/10";
   };
 
+  // The Cute Animation Icons (Used in Feedback Overlay)
+  const AnimatedIcon = () => {
+    if (feedback === 'correct') {
+      return <CheckCircle size={32} className="text-green-400 animate-bounce" />;
+    } else if (feedback === 'wrong') {
+      return <XCircle size={32} className="text-red-400 animate-shake" />;
+    }
+    return null;
+  };
+
+  // Tailwind Keyframe for "shaking" animation
+  const shakeKeyframes = `
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+      20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+    .animate-shake {
+      animation: shake 0.5s ease-in-out;
+    }
+  `;
+
+
   // --- SCREENS ---
 
   // 1. Start Screen
   if (gameState === 'start') {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 font-sans">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 font-sans relative">
+        <style>{shakeKeyframes}</style> {/* Inject custom animation */}
+
         <div className="bg-slate-900 p-8 rounded-3xl shadow-2xl max-w-md w-full text-center border border-slate-800">
           <div className="flex justify-center mb-6">
             <div className="relative">
@@ -332,6 +359,11 @@ export default function LanguageGame() {
             <Play size={24} fill="currentColor" />
             Start Game
           </button>
+        </div>
+
+        {/* Attribution - Developed by Ahmet Ozerdem */}
+        <div className="absolute bottom-4 right-4 text-slate-600 text-xs opacity-75 font-mono">
+            Developed by Ahmet Ozerdem
         </div>
       </div>
     );
@@ -372,13 +404,22 @@ export default function LanguageGame() {
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center p-4 font-sans text-slate-100 selection:bg-blue-500/30">
-      
+      <style>{shakeKeyframes}</style> {/* Inject custom animation */}
+
+      {/* Progress Bar (NEW) */}
+      <div className="w-full max-w-xl bg-slate-900 rounded-full h-2 mb-4 overflow-hidden shadow-inner shadow-slate-900/50">
+        <div 
+            className="h-full bg-blue-600 transition-all duration-500 ease-out"
+            style={{ width: `${progressPercentage}%` }}
+        ></div>
+      </div>
+
       {/* Header */}
       <div className="w-full max-w-xl flex justify-between items-center mb-6 pt-2">
         <div className="flex items-center gap-3">
           <div className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5">
             <span className="text-xs font-bold text-slate-400 tracking-wider">
-              ROUND {currentRound + 1}<span className="text-slate-600">/12</span>
+              ROUND {currentRound + 1}<span className="text-slate-600">/{totalRounds}</span>
             </span>
           </div>
           <span className={`text-xs font-bold px-3 py-1.5 rounded-lg border ${getDifficultyColor(difficulty)} uppercase tracking-wider`}>
@@ -433,7 +474,6 @@ export default function LanguageGame() {
               disabled={isAnswered}
               className={`group relative h-28 rounded-2xl transition-all duration-200 flex items-center justify-center overflow-hidden ${btnClass} active:scale-95`}
             >
-              {/* Flag Image from CDN */}
               <img 
                 src={`https://flagcdn.com/w160/${opt.countryCode}.png`}
                 srcSet={`https://flagcdn.com/w320/${opt.countryCode}.png 2x`}
@@ -457,36 +497,33 @@ export default function LanguageGame() {
         </button>
       </div>
 
-      {/* Feedback Overlay */}
+      {/* Feedback Overlay with Animations */}
       {feedback && (
-        <div className={`fixed bottom-24 left-1/2 transform -translate-x-1/2 px-6 py-4 rounded-2xl font-bold shadow-2xl animate-in slide-in-from-bottom-4 fade-in zoom-in duration-300 border flex flex-col items-center
+        <div className={`fixed bottom-24 left-1/2 transform -translate-x-1/2 px-6 py-4 rounded-2xl font-bold shadow-2xl animate-in slide-in-from-bottom-4 fade-in zoom-in duration-300 border flex items-center gap-3
           ${feedback === 'correct' ? 'bg-slate-900 border-green-500/50 text-green-400' : 
             feedback === 'pass' ? 'bg-slate-900 border-slate-700 text-slate-400' :
             'bg-slate-900 border-red-500/50 text-red-400'}
         `}>
-          {feedback === 'correct' ? (
-            <>
-              <div className="flex items-center gap-2 text-lg">
-                <CheckCircle size={24}/> <span>Correct!</span>
-              </div>
-              <div className="text-xs font-normal mt-1 text-green-500/70">
-                +{100 + (timeLeft*10) + (streak*10)} pts
-              </div>
-            </>
-          ) : feedback === 'pass' ? (
-             <div className="flex items-center gap-2 text-lg">
-                <SkipForward size={24}/> <span>Passed</span>
-             </div>
-          ) : (
-            <>
-               <div className="flex items-center gap-2 text-lg">
-                <XCircle size={24}/> <span>Wrong!</span>
-              </div>
-              <div className="text-xs font-normal mt-1 text-red-500/70">
-                It was {LANGUAGES.find(l => l.id === currentQ.langId)?.name} • -{penaltyAmount} pts
-              </div>
-            </>
-          )}
+          <AnimatedIcon />
+          <div>
+            {feedback === 'correct' ? (
+              <>
+                <div className="text-lg">Correct!</div>
+                <div className="text-xs font-normal mt-0 text-green-500/70">
+                  +{100 + (timeLeft*10) + (streak*10)} pts
+                </div>
+              </>
+            ) : feedback === 'pass' ? (
+               <div className="text-lg">Passed</div>
+            ) : (
+              <>
+                <div className="text-lg">Wrong!</div>
+                <div className="text-xs font-normal mt-0 text-red-500/70">
+                  It was {LANGUAGES.find(l => l.id === currentQ.langId)?.name} • -{penaltyAmount} pts
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
 
