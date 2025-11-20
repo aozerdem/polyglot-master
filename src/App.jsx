@@ -5,12 +5,14 @@ import { getAuth, signInAnonymously, signInWithCustomToken } from 'firebase/auth
 import { getFirestore, doc, setDoc, onSnapshot, collection, query, serverTimestamp } from 'firebase/firestore';
 
 // --- GLOBAL FIREBASE CONFIG & DATA ---
-// These global variables are provided by the canvas environment.
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+// Variables are now injected via Vite configuration
+const appId = __FIREBASE_VARS__.APP_ID.replace(/"/g, ''); // Remove quotes from stringified value
+const firebaseConfig = JSON.parse(__FIREBASE_VARS__.CONFIG);
+const initialAuthToken = __FIREBASE_VARS__.AUTH_TOKEN;
 
-// --- DATASET (Full Data Set) ---
+// --- DATASET (Same as V7) ---
+// ... (DATASET remains the same)
+
 const LANGUAGES = [
   // LATIN FAMILY
   { id: 'es', name: 'Spanish', countryCode: 'es', family: 'latin' },
@@ -227,6 +229,7 @@ function Leaderboard({ isAuthReady, finalScore, onStartNewGame, currentUserName,
             setDb(firestoreDb);
             
             // Define the public collection path for scores
+            // NOTE: We are forcing the query to the simplest public path.
             const q = collection(firestoreDb, `artifacts/${appId}/public/data/leaderboard`);
             
             const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -363,7 +366,8 @@ export default function App() {
         setAuth(firebaseAuth);
 
         const authenticate = async () => {
-            if (initialAuthToken) {
+            // FIX: If initialAuthToken is missing (Vercel), fall back to anonymous sign-in immediately.
+            if (initialAuthToken && initialAuthToken !== "null" && initialAuthToken !== "undefined") {
                 await signInWithCustomToken(firebaseAuth, initialAuthToken);
             } else {
                 await signInAnonymously(firebaseAuth);
@@ -638,7 +642,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* Timer Bar */}
+      /* Timer Bar */
       <div className="w-full max-w-xl h-1.5 bg-slate-900 rounded-full mb-8 overflow-hidden">
         <div 
           className={`h-full transition-all duration-1000 linear ${timeLeft < 5 ? 'bg-red-500' : 'bg-blue-500'}`}
@@ -646,7 +650,7 @@ export default function App() {
         />
       </div>
 
-      {/* Question Card */}
+      /* Question Card */
       <div className="w-full max-w-xl flex-grow flex flex-col justify-start mb-8">
         <div className="bg-white text-slate-900 p-8 rounded-3xl shadow-2xl text-center min-h-[180px] flex flex-col items-center justify-center relative overflow-hidden mb-6 transition-all">
           <span className="absolute top-4 left-6 text-6xl text-slate-200 font-serif leading-none select-none">“</span>
@@ -656,7 +660,7 @@ export default function App() {
           <span className="absolute bottom-0 right-6 text-6xl text-slate-200 font-serif leading-none select-none">”</span>
         </div>
 
-        {/* Flags Grid */}
+        /* Flags Grid */
         <div className="grid grid-cols-2 gap-4">
           {options.map((opt) => {
             let btnClass = "bg-slate-900 border-2 border-slate-800 hover:border-slate-600 hover:bg-slate-800"; // Default
@@ -678,7 +682,7 @@ export default function App() {
                 disabled={isAnswered}
                 className={`group relative h-28 rounded-2xl transition-all duration-200 flex items-center justify-center overflow-hidden ${btnClass} active:scale-95`}
               >
-                {/* Flag Image from CDN */}
+                /* Flag Image from CDN */
                 <img 
                   src={`https://flagcdn.com/w160/${opt.countryCode}.png`}
                   srcSet={`https://flagcdn.com/w320/${opt.countryCode}.png 2x`}
@@ -690,7 +694,7 @@ export default function App() {
           })}
         </div>
 
-        {/* Pass Button */}
+        /* Pass Button */
         <div className="mt-6 flex justify-center">
           <button 
             onClick={handlePass}
@@ -703,7 +707,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* Feedback Overlay */}
+      /* Feedback Overlay */
       {feedback && (
         <div className={`fixed bottom-24 left-1/2 transform -translate-x-1/2 px-6 py-4 rounded-2xl font-bold shadow-2xl animate-in slide-in-from-bottom-4 fade-in zoom-in duration-300 border flex flex-col items-center
           ${feedback === 'correct' ? 'bg-slate-900 border-green-500/50 text-green-400' : 
